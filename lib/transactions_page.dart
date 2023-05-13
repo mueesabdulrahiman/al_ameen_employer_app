@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:al_ameen/db/mongodb.dart';
 import 'package:flutter/material.dart';
 
@@ -19,8 +21,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
   @override
   void initState() {
     super.initState();
-    MongoDatabase database = MongoDatabase();
-    database.refreshUI();
+    MongoDatabase.refreshUI();
   }
 
   @override
@@ -38,10 +39,13 @@ class _TransactionsPageState extends State<TransactionsPage> {
                   int expense = 0;
 
                   for (final result in value) {
-                    if (result.type == "income") {
-                      income += int.parse(result.amount);
-                    } else {
-                      expense += int.parse(result.amount);
+                    if (result.date.day == DateTime.now().day &&
+                        result.date.month == DateTime.now().month) {
+                      if (result.type == "income") {
+                        income += int.parse(result.amount);
+                      } else {
+                        expense += int.parse(result.amount);
+                      }
                     }
                   }
 
@@ -55,7 +59,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         const Text(
-                          'Today\'s Profit',
+                          'Today\'s Balance',
                           style: TextStyle(
                               fontSize: 10.0,
                               letterSpacing: 2.0,
@@ -81,28 +85,28 @@ class _TransactionsPageState extends State<TransactionsPage> {
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceEvenly,
                                       children: [
-                                        Text(
-                                          income.toString(),
-                                          style: const TextStyle(
-                                            fontSize: 20.0,
-                                          ),
-                                        ),
                                         const Text(
                                           'Today\'s Income',
                                           style: TextStyle(
                                               fontSize: 10.0,
                                               letterSpacing: 2.0,
                                               color: Colors.grey),
-                                        )
+                                        ),
+                                        Text(
+                                          income.toString(),
+                                          style: const TextStyle(
+                                            fontSize: 20.0,
+                                          ),
+                                        ),
                                       ]),
-                                  const CircleAvatar(
-                                    backgroundColor: Colors.white,
-                                    radius: 20,
-                                    child: Icon(
-                                      Icons.arrow_upward,
-                                      color: Colors.green,
-                                    ),
-                                  )
+                                  // const CircleAvatar(
+                                  //   backgroundColor: Colors.white,
+                                  //   radius: 20,
+                                  //   child: Icon(
+                                  //     Icons.arrow_upward,
+                                  //     color: Colors.green,
+                                  //   ),
+                                  // )
                                 ],
                               ),
                             ),
@@ -119,27 +123,27 @@ class _TransactionsPageState extends State<TransactionsPage> {
                                       mainAxisAlignment:
                                           MainAxisAlignment.spaceEvenly,
                                       children: [
-                                        Text(
-                                          expense.toString(),
-                                          style:
-                                              const TextStyle(fontSize: 20.0),
-                                        ),
                                         const Text(
                                           'Today\'s Expence',
                                           style: TextStyle(
                                               fontSize: 10.0,
                                               letterSpacing: 2.0,
                                               color: Colors.grey),
-                                        )
+                                        ),
+                                        Text(
+                                          expense.toString(),
+                                          style:
+                                              const TextStyle(fontSize: 20.0),
+                                        ),
                                       ]),
-                                  const CircleAvatar(
-                                    backgroundColor: Colors.white,
-                                    radius: 20,
-                                    child: Icon(
-                                      Icons.arrow_downward,
-                                      color: Colors.red,
-                                    ),
-                                  )
+                                  // const CircleAvatar(
+                                  //   backgroundColor: Colors.white,
+                                  //   radius: 20,
+                                  //   child: Icon(
+                                  //     Icons.arrow_downward,
+                                  //     color: Colors.red,
+                                  //   ),
+                                  // )
                                 ],
                               ),
                             ),
@@ -155,7 +159,15 @@ class _TransactionsPageState extends State<TransactionsPage> {
                       future: MongoDatabase.getData(),
                       builder: (context, snapshot) {
                         if (snapshot.hasData) {
-                          final data = snapshot.data;
+                          DateTime currentDate = DateTime.now().toUtc();
+                          final data = snapshot.data?.where((element) {
+                            final res = element.date.day == currentDate.day &&
+                                element.date.month == currentDate.month;
+
+                            return res == true;
+                          }).toList();
+                          log(data.toString());
+
                           return ListView.builder(
                               itemBuilder: (context, index) {
                                 return Material(

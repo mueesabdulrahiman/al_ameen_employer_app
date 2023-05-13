@@ -30,6 +30,7 @@ environment:
 dependencies:
   cupertino_icons: ^1.0.2
   faker: ^2.1.0
+  fl_chart: ^0.62.0
   flutter:
     sdk: flutter
   intl: ^0.18.0

@@ -1,9 +1,9 @@
 import 'package:al_ameen/db/constants.dart';
 import 'package:al_ameen/model/account_details.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import 'dart:developer';
+
 class MongoDatabase {
   static late Db db;
   static late DbCollection userColl;
@@ -14,7 +14,7 @@ class MongoDatabase {
   static connect() async {
     try {
       final db = await Db.create(databaseConnect);
-      db.open();
+      await db.open();
       inspect(db);
       userColl = db.collection(userCollection);
     } catch (e) {
@@ -22,16 +22,16 @@ class MongoDatabase {
     }
   }
 
-  static Future<String> insert(AccountDetails model) async {
+  static Future<bool> insert(AccountDetails model) async {
     try {
       var result = await userColl.insertOne(model.toJson());
       if (result.isSuccess) {
-        return 'data inserted';
+        return true;
       } else {
-        return 'something went wrong';
+        return false;
       }
     } catch (e) {
-      return e.toString();
+      return false;
     }
   }
 
@@ -41,6 +41,7 @@ class MongoDatabase {
       final result = await userColl.find().toList();
       if (result.isNotEmpty) {
         data = result.map((e) => AccountDetails.fromJson(e)).toList();
+       
       }
     } catch (e) {
       log(e.toString());
@@ -48,26 +49,38 @@ class MongoDatabase {
     return data;
   }
 
-  Future<void> refreshUI() async {
+  static Future<void> refreshUI() async {
     final list = await getData();
     accountListNotifier.value.clear();
     accountListNotifier.value.addAll(list);
-   // accountListNotifier.notifyListeners();
+    accountListNotifier.notifyListeners();
   }
 
   static Future<List<AccountDetails>> searchData(
       {required DateTime start,
       required DateTime end,
       required String type}) async {
-    final startDate = DateFormat('dd-MM-yyyy').format(start);
+    // final startDate = DateFormat('dd-MM-yyyy').format(start);
 
-    final endDate = DateFormat('dd-MM-yyyy').format(end);
+    // final endDate = DateFormat('dd-MM-yyyy').format(end);
+    SelectorBuilder query;
 
-    var query = where
-        .gte('date', startDate)
-        .lte('date', endDate)
-        .eq('type', type.toLowerCase());
+    // log('***');
+    // log(start.toString());
+    // log(end.toString());
+    // log('***');
 
+    if (type == 'Both') {
+      query = where
+          .gte('date', DateTime.utc(start.year, start.month, start.day))
+          .lte('date', DateTime.utc(end.year, end.month, end.day));
+    } else {
+      query = where
+          .gte('date', DateTime.utc(start.year, start.month, start.day))
+          .lte('date', DateTime.utc(end.year, end.month, end.day))
+          .eq('type', type.toLowerCase());
+    }
+    log(query.toString());
     var result = await userColl.find(query).toList();
     final data = result.map((e) => AccountDetails.fromJson(e)).toList();
     return data;

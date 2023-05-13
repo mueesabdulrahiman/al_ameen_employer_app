@@ -3,7 +3,7 @@ import 'package:mongo_dart/mongo_dart.dart';
 class AccountDetails {
   final ObjectId id;
   final String name;
-  final String date;
+  final DateTime date;
   final String time;
   final String amount;
   final String? description;

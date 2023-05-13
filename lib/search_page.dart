@@ -5,7 +5,7 @@ import 'package:al_ameen/db/mongodb.dart';
 import 'package:al_ameen/model/account_details.dart';
 
 class SearchPage extends StatefulWidget {
- const  SearchPage({super.key});
+  const SearchPage({super.key});
 
   @override
   State<SearchPage> createState() => _SearchPageState();
@@ -20,8 +20,6 @@ class _SearchPageState extends State<SearchPage> {
   List<String> categoryTypes = ['Income', 'Expense', 'Both'];
   String? selectedType;
 
-  List<int> fakeData = [160, 100, 90, 200, 500, 240, 300, 210, 70, 80];
-
   List<AccountDetails> searchData = [];
 
   @override
@@ -32,56 +30,6 @@ class _SearchPageState extends State<SearchPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Row(
-            //   children: const [
-            //     Expanded(
-            //       child: TextField(
-            //         decoration: InputDecoration(
-            //           hintText: 'From Date',
-            //           prefixIcon: Icon(Icons.date_range),
-            //           // border: OutlineInputBorder()
-            //         ),
-            //       ),
-            //     ),
-            //     SizedBox(
-            //       width: 10.0,
-            //     ),
-            //     Expanded(
-            //       child: TextField(
-            //         decoration: InputDecoration(
-            //           labelText: 'To Date',
-            //           prefixIcon: Icon(Icons.date_range),
-            //           // border: OutlineInputBorder()
-            //         ),
-            //       ),
-            //     ),
-            //   ],
-            // ),
-            // Row(
-            //   children: [
-            //     Expanded(
-            //       child: DropdownButtonHideUnderline(
-            //         child: DropdownButton<String>(
-            //           hint: const Text('Type'),
-            //           value: selectedType,
-            //           items: categoryTypes.map(buildMenuButton).toList(),
-            //           onChanged: (value) {
-            //             setState(() {
-            //               selectedType = value;
-            //             });
-            //           },
-            //           elevation: 1,
-            //         ),
-            //       ),
-            //     ),
-            //     Expanded(
-            //         child: ElevatedButton(
-            //             onPressed: () {}, child: const Text('Apply')))
-            //   ],
-            // ),
-
-            //or
-
             Container(
               height: MediaQuery.of(context).size.width * 0.1,
               decoration: BoxDecoration(
@@ -140,7 +88,6 @@ class _SearchPageState extends State<SearchPage> {
                         formattedDueDate != null
                             ? formattedDueDate!
                             : 'To Date ',
-                        //textAlign: TextAlign.center,
                       ),
                     ),
                   ),
@@ -220,7 +167,7 @@ class _SearchPageState extends State<SearchPage> {
 
             ElevatedButton(
                 onPressed: () async {
-                  if (fromDatePicker != null || toDatePicker != null) {
+                  if (fromDatePicker != null && toDatePicker != null) {
                     searchData = await MongoDatabase.searchData(
                         start: fromDatePicker!,
                         end: toDatePicker!,
@@ -372,7 +319,9 @@ class _SearchPageState extends State<SearchPage> {
                                 trailing: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Text(searchData[index].date),
+                                    Text(DateFormat('dd-MM-yyyy')
+                                        .format(searchData[index].date)
+                                        .substring(0, 10)),
                                     Text(searchData[index].time),
                                   ],
                                 ));
