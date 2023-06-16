@@ -1,7 +1,9 @@
 import 'dart:developer';
 
+import 'package:al_ameen/db/firebasedb.dart';
 import 'package:al_ameen/db/mongodb.dart';
 import 'package:al_ameen/model/account_details.dart';
+import 'package:al_ameen/model/data.dart';
 import 'package:faker/faker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -29,15 +31,17 @@ class _HomePageState extends State<AddDetailsPage> {
   CategoryType _selectedCategory = CategoryType.income;
   bool _onlinePayment = false;
   late bool isScrolled;
+  DateTime? pickedDate;
+  TimeOfDay? pickedTime;
+  DateTime? formattedDate;
+
   @override
   void initState() {
     super.initState();
     _dateController = TextEditingController();
     _dateController.text =
         DateFormat('dd-MM-yyyy HH:mm a').format(DateTime.now());
-    //log(DateFormat('dd-MM-yyyy').format(DateTime.now()).toString());
-    DateTime date = DateTime(2023, 04, 19);
-
+    //formattedDate = ;
     _amountController = TextEditingController();
     _descriptionController = TextEditingController();
   }
@@ -94,6 +98,31 @@ class _HomePageState extends State<AddDetailsPage> {
                     } else {
                       return null;
                     }
+                  },
+                  onTap: () async {
+                    pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(DateTime.now().year, 1, 1),
+                        lastDate: DateTime(DateTime.now().year, 12, 31));
+                    pickedTime = const TimeOfDay(hour: 12, minute: 0);
+                    // await showTimePicker(
+                    //     context: context,
+                    //     initialTime: const TimeOfDay(hour: 12, minute: 0));
+                    setState(() {
+                      if (pickedDate != null) {
+                        formattedDate = DateTime.utc(
+                            pickedDate!.year,
+                            pickedDate!.month,
+                            pickedDate!.day,
+                            pickedTime!.hour,
+                            pickedTime!.minute);
+                        _dateController.text = DateFormat('dd-MM-yyyy HH:mm a')
+                            .format(formattedDate!);
+                      } else {
+                        formattedDate = DateTime.now().toUtc();
+                      }
+                    });
                   },
                 ),
                 const SizedBox(
@@ -182,14 +211,12 @@ class _HomePageState extends State<AddDetailsPage> {
                       style: TextStyle(fontSize: 18),
                     ),
                     onPressed: () async {
+                      FocusScope.of(context).unfocus();
                       if (_formKey.currentState!.validate()) {
                         final splittedDate = _dateController.text.split(' ');
                         final time = '${splittedDate[1]} ${splittedDate[2]}';
                         var id = mongo.ObjectId();
-                        final faker = Faker();
-                        var name = faker.person.name();
-
-                        final formattedDate = DateTime.utc(DateTime.now().year,
+                        formattedDate ??= DateTime.utc(DateTime.now().year,
                             DateTime.now().month, DateTime.now().day);
 
                         final category =
@@ -200,14 +227,31 @@ class _HomePageState extends State<AddDetailsPage> {
                             _onlinePayment ? 'Paid Online' : 'Money';
                         final model = AccountDetails(
                             id: id,
-                            name: name,
-                            date: formattedDate,
+                            name: MongoDatabase.name ?? 'muees',
+                            date: formattedDate ?? DateTime.now().toUtc(),
+                            //     DateTime.utc(DateTime.now().year,
+                            // DateTime.now().month, DateTime.now().day),
                             time: time,
                             amount: _amountController.text,
                             description: _descriptionController?.text ?? '',
                             type: category,
-                            payment: paymentMethod);                       
-                        await MongoDatabase.insert(model);
+                            payment: paymentMethod);
+
+                        final model2 = Data(
+                            
+                            name: MongoDatabase.name!,
+                            date: formattedDate ?? DateTime.now(),
+                            time: time,
+                            amount: _amountController.text,
+                            description: _descriptionController?.text,
+                            type: category,
+                            payment: paymentMethod);
+                        await FirebaseDB.insert(model2);
+                        await FirebaseDB.getData2();
+
+                        // await MongoDatabase.insert(model);
+                        // await MongoDatabase.getData();
+
                         Navigator.pop(_scaffoldKey.currentContext!);
                       }
                     }),

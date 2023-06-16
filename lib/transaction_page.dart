@@ -1,17 +1,20 @@
 import 'dart:developer';
 
+import 'package:al_ameen/db/firebasedb.dart';
 import 'package:al_ameen/db/mongodb.dart';
+import 'package:al_ameen/model/account_details.dart';
+import 'package:al_ameen/model/data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
-class TransactionsPage extends StatefulWidget {
-  const TransactionsPage({super.key});
+class TransactionPage extends StatefulWidget {
+  const TransactionPage({super.key});
 
   @override
-  State<TransactionsPage> createState() => _TransactionsPageState();
+  State<TransactionPage> createState() => _TransactionPageState();
 }
 
-class _TransactionsPageState extends State<TransactionsPage> {
+class _TransactionPageState extends State<TransactionPage> {
   DateTime? datePicker;
 
   String? formattedFromDate;
@@ -22,11 +25,14 @@ class _TransactionsPageState extends State<TransactionsPage> {
   @override
   void initState() {
     super.initState();
-     MongoDatabase.getData();
+    FirebaseDB.getData2();
   }
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      FirebaseDB.getData2();
+    });
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -34,7 +40,7 @@ class _TransactionsPageState extends State<TransactionsPage> {
           child: Column(
             children: [
               ValueListenableBuilder(
-                valueListenable: MongoDatabase.accountListNotifier,
+                valueListenable: FirebaseDB.accountListNotifier,
                 builder: (context, value, _) {
                   int income = 0;
                   int expense = 0;
@@ -156,20 +162,26 @@ class _TransactionsPageState extends State<TransactionsPage> {
                 },
               ),
               Expanded(
-                  child: ValueListenableBuilder(
-                      valueListenable: MongoDatabase.accountListNotifier,
-                      builder: (context, snapshot, child) {
-                        if (snapshot.isNotEmpty) {
+                child: FutureBuilder<List<Data>>(
+                    future: FirebaseDB.getData2(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        final value = snapshot.data!;
+                        log('hasData');
+                        log(value.toString());
+
+                        List<Data> data = [];
+
+                        if (value.isNotEmpty) {
                           DateTime currentDate = DateTime.now().toUtc();
-                          final data = snapshot.where((element) {
+                          data = value.where((element) {
                             final res = element.date.day == currentDate.day &&
                                 element.date.month == currentDate.month;
-
                             return res == true;
                           }).toList();
-                          log(data.toString());
-                          if (data.isNotEmpty) {
-                            return ListView.builder(
+                        }
+                        return (data.isNotEmpty)
+                            ? ListView.builder(
                                 itemBuilder: (context, index) {
                                   return Material(
                                     child: Padding(
@@ -181,8 +193,8 @@ class _TransactionsPageState extends State<TransactionsPage> {
                                             SlidableAction(
                                                 icon: Icons.delete,
                                                 onPressed: (context) {
-                                                  MongoDatabase.deleteData(
-                                                      data[index].id);
+                                                  FirebaseDB.deleteData(
+                                                      index.toString());
                                                   setState(() {});
                                                 })
                                           ],
@@ -246,28 +258,61 @@ class _TransactionsPageState extends State<TransactionsPage> {
                                     ),
                                   );
                                 },
-                                itemCount: data.length);
-                          } else {
-                            return const Center(
-                              child: Text('No Data Today'),
-                            );
-                          }
-                        }
-                        // else if (snapshot) {
-                        //   return const Center(
-                        //     child: Text("Error"),
-                        //   );
-                        // }
-                        else {
-                          return const Center(
-                            child: CircularProgressIndicator(),
-                          );
-                        }
-                      })),
+                                itemCount: data.length)
+                            : const Center(
+                                child: Text('No Data'),
+                              );
+                      } else {
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      }
+                    }),
+              ),
             ],
           ),
         ),
       ),
     );
   }
+
+  buildListTile(Data data) => ListTile(
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 10.0, vertical: 5.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+      tileColor: Colors.blue.shade100,
+      title: Column(
+        children: [
+          const Text(
+            'Nil',
+            style: TextStyle(color: Colors.transparent),
+          ),
+          Text(
+            data.amount,
+            style: data.type == 'income'
+                ? const TextStyle(color: Colors.green)
+                : const TextStyle(color: Colors.red),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+      subtitle: data.description == null
+          ? const Text(
+              'Nil',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.transparent),
+            )
+          : Text(
+              data.description!,
+              textAlign: TextAlign.center,
+            ),
+      leading: CircleAvatar(
+        radius: 25,
+        child: Text(
+          data.name.substring(0, 2),
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 15.0),
+        ),
+      ),
+      trailing: Text(data.time));
 }

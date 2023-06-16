@@ -28,11 +28,15 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  animations: ^2.0.7
+  cloud_firestore: ^4.8.0
   cupertino_icons: ^1.0.2
   faker: ^2.1.0
+  firebase_auth: ^4.6.2
   fl_chart: ^0.62.0
   flutter:
     sdk: flutter
+  flutter_slidable: ^3.0.0
   intl: ^0.18.0
   mongo_dart: ^0.9.1
 

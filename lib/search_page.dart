@@ -1,4 +1,10 @@
+import 'dart:math';
+
+import 'package:al_ameen/analytics_page.dart';
+import 'package:al_ameen/db/firebasedb.dart';
+import 'package:al_ameen/model/data.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 
 import 'package:al_ameen/db/mongodb.dart';
@@ -19,8 +25,27 @@ class _SearchPageState extends State<SearchPage> {
   String? formattedDueDate;
   List<String> categoryTypes = ['Income', 'Expense', 'Both'];
   String? selectedType;
+  bool flag = false;
 
-  List<AccountDetails> searchData = [];
+  List<Data> searchData = [];
+
+  @override
+  void initState() {
+    super.initState();
+   // getData();
+  }
+
+  getData() async {
+    searchData = await FirebaseDB.getData2();
+
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    //searchData.clear();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +58,7 @@ class _SearchPageState extends State<SearchPage> {
             Container(
               height: MediaQuery.of(context).size.width * 0.1,
               decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: Theme.of(context).primaryColor,
                   border: Border.all(color: Colors.black26),
                   borderRadius: BorderRadius.circular(10.0)),
               child: Row(children: [
@@ -59,6 +84,7 @@ class _SearchPageState extends State<SearchPage> {
                         formattedFromDate != null
                             ? formattedFromDate!
                             : 'From Date',
+                        style: const TextStyle(color: Colors.white),
                       ),
                     ),
                   ),
@@ -74,7 +100,7 @@ class _SearchPageState extends State<SearchPage> {
                         initialDate: DateTime.now(),
                         firstDate:
                             DateTime.now().subtract(const Duration(days: 365)),
-                        lastDate: DateTime.now());
+                        lastDate:DateTime.now().add(const Duration(days: 30) ));
 
                     toDatePicker != null
                         ? formattedDueDate =
@@ -88,6 +114,7 @@ class _SearchPageState extends State<SearchPage> {
                         formattedDueDate != null
                             ? formattedDueDate!
                             : 'To Date ',
+                        style: const TextStyle(color: Colors.white),
                       ),
                     ),
                   ),
@@ -95,55 +122,13 @@ class _SearchPageState extends State<SearchPage> {
                 const VerticalDivider(
                   color: Colors.black,
                 ),
-
-                // elevation: 0,
-                //                 onPressed: () async {
-                // datePicker = await showDatePicker(
-                //     context: context,
-                //     initialDate: DateTime.now(),
-                //     firstDate:
-                //         DateTime.now().subtract(const Duration(days: 365)),
-                //     lastDate: DateTime.now());
-
-                // datePicker != null
-                //     ? formattedFromDate =
-                //         DateFormat.yMMMMd().format(datePicker!)
-                //     : null;
-                // setState(() {});
-                //                 },
-                // highlightColor: Colors.transparent,
-                // splashColor: Colors.transparent,
-                // shape: const RoundedRectangleBorder(),
-
-                // Expanded(
-                //     child: MaterialButton(
-                //   elevation: 0,
-                //   onPressed: () async {
-                //     datePicker = await showDatePicker(
-                //         context: context,
-                //         initialDate: DateTime.now(),
-                //         firstDate:
-                //             DateTime.now().subtract(const Duration(days: 365)),
-                //         lastDate: DateTime.now());
-
-                //     datePicker != null
-                //         ? formattedDueDate =
-                //             DateFormat.yMMMMd().format(datePicker!)
-                //         : null;
-                //     setState(() {});
-                //   },
-                //   color: Colors.grey.shade300,
-                //   highlightColor: Colors.transparent,
-                //   splashColor: Colors.transparent,
-                //   shape: RoundedRectangleBorder(),
-                //   child: Text(
-                //       formattedDueDate != null ? formattedDueDate! : 'Due'),
-                // )),
                 Expanded(
                     child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
+                    iconEnabledColor: Colors.white,
                     isDense: true,
-                    hint: const Text('Type'),
+                    hint: const Text('Type',
+                        style: TextStyle(color: Colors.white)),
                     value: selectedType,
                     items: categoryTypes.map(buildMenuButton).toList(),
                     onChanged: (value) {
@@ -151,156 +136,48 @@ class _SearchPageState extends State<SearchPage> {
                         selectedType = value;
                       });
                     },
-                    //elevation: 1,
-                    // onPressed: () {
-                    //   print('press');
-                    // },
-                    // color: Colors.grey.shade300,
-                    // highlightColor: Colors.transparent,
-                    // splashColor: Colors.transparent,
-                    // shape: RoundedRectangleBorder(),
-                    // child: const Text('Type'),
                   ),
                 )),
               ]),
             ),
-
             ElevatedButton(
                 onPressed: () async {
-                  if (fromDatePicker != null && toDatePicker != null) {
-                    searchData = await MongoDatabase.searchData(
+                  if (fromDatePicker != null && toDatePicker != null && selectedType != null) {
+                    searchData = await FirebaseDB.searchData(
                         start: fromDatePicker!,
                         end: toDatePicker!,
                         type: selectedType!);
+                    flag = true;
                     setState(() {});
                   }
                 },
                 child: const Text('Apply')),
-
-            //or
-
-            // Container(
-            //   height: MediaQuery.of(context).size.height * 0.1,
-            //   decoration: BoxDecoration(
-            //       color: Colors.grey.shade300,
-            //       borderRadius: BorderRadius.circular(10.0)),
-            //   child: Row(children: [
-            //     Expanded(
-            //         child: MaterialButton(
-            //       elevation: 0,
-            //       onPressed: () async {
-            //         datePicker = await showDatePicker(
-            //             context: context,
-            //             initialDate: DateTime.now(),
-            //             firstDate:
-            //                 DateTime.now().subtract(const Duration(days: 365)),
-            //             lastDate: DateTime.now());
-
-            //         datePicker != null
-            //             ? formattedFromDate =
-            //                 DateFormat.yMMMMd().format(datePicker!)
-            //             : null;
-            //         setState(() {});
-            //       },
-            //       color: Colors.grey.shade300,
-            //       highlightColor: Colors.transparent,
-            //       splashColor: Colors.transparent,
-            //       shape: const RoundedRectangleBorder(),
-            //       child: Text(
-            //         formattedFromDate != null ? formattedFromDate! : 'From ',
-            //       ),
-            //     )),
-            //     Expanded(
-            //         child: MaterialButton(
-            //       elevation: 0,
-            //       onPressed: () async {
-            //         datePicker = await showDatePicker(
-            //             context: context,
-            //             initialDate: DateTime.now(),
-            //             firstDate:
-            //                 DateTime.now().subtract(const Duration(days: 365)),
-            //             lastDate: DateTime.now());
-
-            //         datePicker != null
-            //             ? formattedDueDate =
-            //                 DateFormat.yMMMMd().format(datePicker!)
-            //             : null;
-            //         setState(() {});
-            //       },
-            //       color: Colors.grey.shade300,
-            //       highlightColor: Colors.transparent,
-            //       splashColor: Colors.transparent,
-            //       shape: RoundedRectangleBorder(),
-            //       child: Text(
-            //           formattedDueDate != null ? formattedDueDate! : 'Due'),
-            //     )),
-            //     Expanded(
-            //         child: DropdownButtonHideUnderline(
-            //       child: DropdownButton<String>(
-            //         hint: const Text('Type'),
-            //         value: selectedType,
-            //         items: categoryTypes.map(buildMenuButton).toList(),
-            //         onChanged: (value) {
-            //           setState(() {
-            //             selectedType = value;
-            //           });
-            //         },
-            //         //elevation: 1,
-            //         // onPressed: () {
-            //         //   print('press');
-            //         // },
-            //         // color: Colors.grey.shade300,
-            //         // highlightColor: Colors.transparent,
-            //         // splashColor: Colors.transparent,
-            //         // shape: RoundedRectangleBorder(),
-            //         // child: const Text('Type'),
-            //       ),
-            //     )),
-            //     const SizedBox(
-            //       width: 0,
-            //     ),
-            //     Expanded(
-            //         child: MaterialButton(
-            //       elevation: 0,
-            //       onPressed: () {
-            //         print('press');
-            //       },
-            //       color: Colors.grey.shade300,
-            //       highlightColor: Colors.transparent,
-            //       splashColor: Colors.transparent,
-            //       shape: const RoundedRectangleBorder(),
-            //       child: const Text('Search'),
-            //     )),
-            //   ]),
-            // ),
             const SizedBox(
               height: 10.0,
             ),
-            const SizedBox(
-              height: 40,
-              //MediaQuery.of(context).size.height * 0.03,
-              child: Text(
-                'Searched Data',
-                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 18.0),
-              ),
-            ),
-            // const SizedBox(
-            //   height: 5.0,
-            // ),
+            searchData.isNotEmpty
+                ? const Text(
+                    'Searched Data',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w500, fontSize: 18.0),
+                  )
+                : const SizedBox(),
             Expanded(
                 child: searchData.isNotEmpty
                     ? Material(
                         child: ListView.separated(
+                          padding: const EdgeInsets.only(top: 10.0),
                           //shrinkWrap: true,
                           separatorBuilder: (context, index) =>
                               const SizedBox(height: 8.0),
                           itemBuilder: (context, index) {
+                            // final sortedData = searchData.sort((a, b) => a.,)
                             return ListTile(
                                 contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 10.0, vertical: 5.0),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10.0)),
-                                tileColor: Colors.grey.shade300,
+                                tileColor: Colors.blue.shade100,
                                 title: Text(
                                   searchData[index].amount.toString(),
                                   textAlign: TextAlign.center,
@@ -329,8 +206,10 @@ class _SearchPageState extends State<SearchPage> {
                           itemCount: searchData.length,
                         ),
                       )
-                    : const Center(
-                        child: Text('Searched data not found '),
+                    : Center(
+                        child: Text(flag
+                            ? 'Searched data not found '
+                            : 'Search For Data'),
                       )),
           ],
         ),

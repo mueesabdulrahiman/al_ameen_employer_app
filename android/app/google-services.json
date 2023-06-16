@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "637262337594",
+    "project_id": "al-ameen-9d627",
+    "storage_bucket": "al-ameen-9d627.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:637262337594:android:0d81a32b9bef8727740703",
+        "android_client_info": {
+          "package_name": "com.example.al_ameen"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "637262337594-f1ae77fv3cb37unrdkk8g2su0mglrj1m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2rR4sGqQ29PjVlaq15egJoj57u6x0y2E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "637262337594-f1ae77fv3cb37unrdkk8g2su0mglrj1m.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
