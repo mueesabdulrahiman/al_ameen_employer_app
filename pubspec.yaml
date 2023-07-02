@@ -39,6 +39,7 @@ dependencies:
   flutter_slidable: ^3.0.0
   intl: ^0.18.0
   mongo_dart: ^0.9.1
+  provider: ^6.0.5
 
 dev_dependencies:
   flutter_lints: ^2.0.0

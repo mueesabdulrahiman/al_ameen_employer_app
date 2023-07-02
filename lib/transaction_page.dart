@@ -1,50 +1,42 @@
-import 'dart:developer';
-
-import 'package:al_ameen/db/firebasedb.dart';
-import 'package:al_ameen/db/mongodb.dart';
-import 'package:al_ameen/model/account_details.dart';
 import 'package:al_ameen/model/data.dart';
+import 'package:al_ameen/view_model/account_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:provider/provider.dart';
 
-class TransactionPage extends StatefulWidget {
+class TransactionPage extends StatelessWidget {
   const TransactionPage({super.key});
 
   @override
-  State<TransactionPage> createState() => _TransactionPageState();
-}
-
-class _TransactionPageState extends State<TransactionPage> {
-  DateTime? datePicker;
-
-  String? formattedFromDate;
-  String? formattedDueDate;
-  List<String> categoryTypes = ['income', 'expense'];
-  String? selectedType;
-
-  @override
-  void initState() {
-    super.initState();
-    FirebaseDB.getData2();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      FirebaseDB.getData2();
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    // final accountProvider =
+    //     Provider.of<AccountProvider>(context, listen: false);
+    // accountProvider.getAccountsData();
+    //context.watch<AccountProvider>();
+    //log('getData:${accountProvider.getData}');
+    //});
+
+    // Provider.of<AccountProvider>(context, listen: false);
+
+    //WidgetsBinding.instance.addPostFrameCallback((_) {
+    //FirebaseDB.getData2();
+    //Provider.of<AccountProvider>(context, listen: false).getAccountsData();
+    // AccountProvider accountProvider = Provider.of<AccountProvider>(context, listen: false);
+    // log('getData:${accountProvider.getData}');
+    //  });
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(15.0, 10.0, 15.0, 5.0),
           child: Column(
             children: [
-              ValueListenableBuilder(
-                valueListenable: FirebaseDB.accountListNotifier,
-                builder: (context, value, _) {
+              Consumer<AccountProvider>(
+                builder: (context, state, child) {
                   int income = 0;
                   int expense = 0;
-
+                  var value = state.getData;
                   for (final result in value) {
                     if (result.date.day == DateTime.now().day &&
                         result.date.month == DateTime.now().month) {
@@ -57,7 +49,9 @@ class _TransactionPageState extends State<TransactionPage> {
                   }
 
                   return Container(
-                    height: 200,
+                    height: MediaQuery.of(context).size.width < 500
+                        ? MediaQuery.of(context).size.height * 0.25
+                        : MediaQuery.of(context).size.width * 0.3,
                     padding: const EdgeInsets.all(10.0),
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -66,6 +60,7 @@ class _TransactionPageState extends State<TransactionPage> {
                         boxShadow: [
                           BoxShadow(
                             color: Colors.grey.shade400,
+                            //color: Colors.black,
                             offset: const Offset(8, 8),
                             blurRadius: 10.0,
                             spreadRadius: 1.0,
@@ -93,14 +88,13 @@ class _TransactionPageState extends State<TransactionPage> {
                               fontSize: 50.0, color: Colors.white),
                         ),
                         Row(
-                          //mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
                             Column(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
-                                  Row(
-                                    children: const [
+                                  const Row(
+                                    children: [
                                       Text(
                                         'Today\'s Income',
                                         style: TextStyle(
@@ -129,8 +123,8 @@ class _TransactionPageState extends State<TransactionPage> {
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceEvenly,
                                 children: [
-                                  Row(
-                                    children: const [
+                                  const Row(
+                                    children: [
                                       Text(
                                         'Today\'s Expence',
                                         style: TextStyle(
@@ -161,114 +155,109 @@ class _TransactionPageState extends State<TransactionPage> {
                   );
                 },
               ),
-              Expanded(
-                child: FutureBuilder<List<Data>>(
-                    future: FirebaseDB.getData2(),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        final value = snapshot.data!;
-                        log('hasData');
-                        log(value.toString());
-
-                        List<Data> data = [];
-
-                        if (value.isNotEmpty) {
-                          DateTime currentDate = DateTime.now().toUtc();
-                          data = value.where((element) {
-                            final res = element.date.day == currentDate.day &&
-                                element.date.month == currentDate.month;
-                            return res == true;
-                          }).toList();
-                        }
-                        return (data.isNotEmpty)
-                            ? ListView.builder(
-                                itemBuilder: (context, index) {
-                                  return Material(
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(top: 10.0),
-                                      child: Slidable(
-                                        startActionPane: ActionPane(
-                                          motion: const StretchMotion(),
-                                          children: [
-                                            SlidableAction(
-                                                icon: Icons.delete,
-                                                onPressed: (context) {
-                                                  FirebaseDB.deleteData(
-                                                      index.toString());
-                                                  setState(() {});
-                                                })
-                                          ],
+              const SizedBox(
+                height: 10,
+              ),
+              Expanded(child: Consumer<AccountProvider>(
+                builder: (context, res, _) {
+                  final value = res.getData;
+                  List<Data> data = [];
+                  if (value.isNotEmpty) {
+                    DateTime currentDate = DateTime.now();
+                    data = value.where((element) {
+                      final res = element.date.day == currentDate.day &&
+                          element.date.month == currentDate.month;
+                      return res == true;
+                    }).toList();
+                  }
+                  if (res.loading) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  } else if (data.isNotEmpty) {
+                    return ListView.builder(
+                        itemBuilder: (context, index) {
+                          return Material(
+                            color: Colors.transparent,
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 10.0),
+                              child: Slidable(
+                                startActionPane: ActionPane(
+                                  motion: const StretchMotion(),
+                                  children: [
+                                    SlidableAction(
+                                        icon: Icons.delete,
+                                        onPressed: (context) {
+                                          if (data[index].id != null) {
+                                            Provider.of<AccountProvider>(
+                                                    context,
+                                                    listen: false)
+                                                .deleteAccountsData(
+                                                    data[index].id!);
+                                          }
+                                        })
+                                  ],
+                                ),
+                                child: ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 10.0, vertical: 5.0),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10.0)),
+                                    tileColor: Colors.blue.shade100,
+                                    //Colors.grey.shade300,
+                                    title: Column(
+                                      children: [
+                                        const Text(
+                                          'Nil',
+                                          style: TextStyle(
+                                              color: Colors.transparent),
                                         ),
-                                        child: ListTile(
-                                            contentPadding:
-                                                const EdgeInsets.symmetric(
-                                                    horizontal: 10.0,
-                                                    vertical: 5.0),
-                                            shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                        10.0)),
-                                            tileColor: Colors.blue.shade100,
-                                            title: Column(
-                                              children: [
-                                                const Text(
-                                                  'Nil',
-                                                  style: TextStyle(
-                                                      color:
-                                                          Colors.transparent),
-                                                ),
-                                                Text(
-                                                  data[index].amount,
-                                                  style: data[index].type ==
-                                                          'income'
-                                                      ? const TextStyle(
-                                                          color: Colors.green)
-                                                      : const TextStyle(
-                                                          color: Colors.red),
-                                                  textAlign: TextAlign.center,
-                                                ),
-                                              ],
-                                            ),
-                                            subtitle: data[index].description ==
-                                                    null
-                                                ? const Text(
-                                                    'Nil',
-                                                    textAlign: TextAlign.center,
-                                                    style: TextStyle(
-                                                        color:
-                                                            Colors.transparent),
-                                                  )
-                                                : Text(
-                                                    data[index].description!,
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                            leading: CircleAvatar(
-                                              radius: 25,
-                                              child: Text(
-                                                data[index]
-                                                    .name
-                                                    .substring(0, 2),
-                                                textAlign: TextAlign.center,
-                                                style: const TextStyle(
-                                                    fontSize: 15.0),
-                                              ),
-                                            ),
-                                            trailing: Text(data[index].time)),
+                                        Text(
+                                          data[index].payment == 'Money'
+                                              ? data[index].amount
+                                              : "${data[index].amount} (UPI)",
+                                          style: data[index].type == 'income'
+                                              ? const TextStyle(
+                                                  color: Colors.green)
+                                              : const TextStyle(
+                                                  color: Colors.red),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ],
+                                    ),
+                                    subtitle: data[index].description == null
+                                        ? const Text(
+                                            'Nil',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                color: Colors.transparent),
+                                          )
+                                        : Text(
+                                            data[index].description!,
+                                            textAlign: TextAlign.center,
+                                          ),
+                                    leading: CircleAvatar(
+                                      radius: 25,
+                                      child: Text(
+                                        data[index].name.substring(0, 2),
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(fontSize: 15.0),
                                       ),
                                     ),
-                                  );
-                                },
-                                itemCount: data.length)
-                            : const Center(
-                                child: Text('No Data'),
-                              );
-                      } else {
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
-                      }
-                    }),
-              ),
+                                    trailing: Text(data[index].time)),
+                              ),
+                            ),
+                          );
+                        },
+                        itemCount: data.length);
+                  } else {
+                    return const Center(
+                      child: Text('No Data'),
+                    );
+                  }
+                },
+              )),
             ],
           ),
         ),

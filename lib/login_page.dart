@@ -1,7 +1,5 @@
-import 'dart:developer';
 
 import 'package:al_ameen/db/firebasedb.dart';
-import 'package:al_ameen/db/mongodb.dart';
 import 'package:al_ameen/home_page.dart';
 import 'package:al_ameen/model/login_details.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -89,12 +87,13 @@ class _MyWidgetState extends State<LoginPage> {
       final user =
           Login(usernameController.text.trim(), passwordController.text.trim());
       UserCredential? result = await FirebaseDB.signInUser(user, context);
+      
 
-      if (result?.user != null) {
+      if (result?.user?.email != null) {
         Navigator.pushReplacement(
             scaffoldKey.currentContext!,
             MaterialPageRoute(
-              builder: (context) => const HomePage(),
+              builder: (context) =>  HomePage(),
             ));
         usernameController.clear();
         passwordController.clear();

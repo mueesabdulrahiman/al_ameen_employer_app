@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:al_ameen/db/api_status.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -10,15 +11,21 @@ import 'package:al_ameen/model/data.dart';
 import 'package:al_ameen/model/login_details.dart';
 
 class FirebaseDB {
+  static String? _currentUser;
+  static String? get currentUser => _currentUser;
   static ValueNotifier<List<Data>> accountListNotifier = ValueNotifier([]);
   static ValueNotifier<List<Data>> searchedAccountListNotifier =
       ValueNotifier([]);
   static ValueNotifier<Map<String, List<Data>>>
       searchedEmployeeAccountListNotifier = ValueNotifier({});
 
+  // connect firebase
+
   static Future connect() async {
     await Firebase.initializeApp();
   }
+
+  // login user
 
   static Future signInUser(Login login, BuildContext context) async {
     showDialog(
@@ -30,38 +37,47 @@ class FirebaseDB {
     try {
       final user = await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: '${login.username}@gmail.com', password: login.password);
+
+      _currentUser = login.username;
       return user;
     } on FirebaseAuthException catch (e) {
-      print(e);
+      print(e.message);
     }
-    navigatorkey.currentState!.popUntil((route)=> route.isFirst);
+    navigatorkey.currentState!.popUntil((route) => route.isFirst);
   }
+
+  //  add data
 
   static Future<void> insert(Data model) async {
     try {
       final docUser = FirebaseFirestore.instance.collection('users').doc();
 
-      //final json = {'name': 'muees', 'age': 24, 'date': DateTime(2023, 6, 9)};
       model.id = docUser.id;
       docUser.set(model.toJson());
-    } catch (e) {
+    } on FirebaseException catch (e) {
       print(e.toString());
     }
   }
 
-  static Future<List<Data>> getData2() async {
+  // get data
+
+  static Future getData2() async {
     List<Data> data = [];
-    final collections = FirebaseFirestore.instance.collection('users');
-    final querySnapshot = await collections.get();
-    accountListNotifier.value.clear();
 
-    data = querySnapshot.docs.map((doc) => Data.fromJson(doc.data())).toList();
-    accountListNotifier.value.clear();
-    accountListNotifier.value.addAll(data);
-    accountListNotifier.notifyListeners();
+    try {
+      final collections = FirebaseFirestore.instance.collection('users');
+      final querySnapshot = await collections.get();
 
-    return data;
+      data =
+          querySnapshot.docs.map((doc) => Data.fromJson(doc.data())).toList();
+     
+      if (data.isNotEmpty) return Success(code: 200, response: data);
+    } on FirebaseException catch (e) {
+      return Failure(code: 404, response: e.message.toString());
+    }
   }
+
+  // get data using stream
 
   static Stream<List<Data>> getData() {
     final collections = FirebaseFirestore.instance.collection('users');
@@ -72,10 +88,15 @@ class FirebaseDB {
         snapshot.docs.map((doc) => Data.fromJson(doc.data())).toList());
   }
 
+  // delete data
+
   static Future<void> deleteData(String id) async {
     final docUser = FirebaseFirestore.instance.collection('users').doc(id);
-    docUser.delete();
+    await docUser.delete();
+    
   }
+
+  // search data
 
   static Future<List<Data>> searchData(
       {required DateTime start, required DateTime end, String? type}) async {
@@ -120,16 +141,21 @@ class FirebaseDB {
     return searchResult;
   }
 
-  Future<void> getEachEmployeeData(
-      {DateTime? fromDate, DateTime? toDate}) async {
+  // get each employers data or search each employer data
+
+  Future getEachEmployeeData({DateTime? fromDate, DateTime? toDate}) async {
     final employees = fromDate != null && toDate != null
         ? await FirebaseDB.searchData(start: fromDate, end: toDate)
         : await FirebaseDB.getData2();
-    searchedEmployeeAccountListNotifier.value.clear();
-    searchedEmployeeAccountListNotifier.value
-        .addAll(seperateListsByName(employees));
-    searchedEmployeeAccountListNotifier.notifyListeners();
+     if (employees is Failure) return employees;
+   
+
+    return seperateListsByName(employees is Success
+        ? employees.response as List<Data>
+        : employees as List<Data>);
   }
+
+  // function to get each employers data
 
   Map<String, List<Data>> seperateListsByName(List<Data> employees) {
     Map<String, List<Data>> eachEmployeesData = {};
@@ -143,12 +169,13 @@ class FirebaseDB {
     return eachEmployeesData;
   }
 
-  Future<void> getDashBoardData({DateTime? fromDate, DateTime? toDate}) async {
+  // get complete account data or search  account data
+
+  Future getDashBoardData({DateTime? fromDate, DateTime? toDate}) async {
     final allData = fromDate != null && toDate != null
         ? await FirebaseDB.searchData(start: fromDate, end: toDate)
         : await FirebaseDB.getData2();
-    searchedAccountListNotifier.value.clear();
-    searchedAccountListNotifier.value.addAll(allData);
-    searchedAccountListNotifier.notifyListeners();
+   
+    return allData;
   }
 }

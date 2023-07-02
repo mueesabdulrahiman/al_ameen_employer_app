@@ -1,10 +1,8 @@
 import 'package:al_ameen/allUsers_page.dart';
-import 'package:al_ameen/db/mongodb.dart';
-import 'package:al_ameen/login_page.dart';
+import 'package:al_ameen/db/firebasedb.dart';
 import 'package:al_ameen/main.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '';
 
 class AccountPage extends StatelessWidget {
   const AccountPage({super.key});
@@ -45,7 +43,7 @@ class AccountPage extends StatelessWidget {
                       width: 20.0,
                     ),
                     Text(
-                      'Welcome, ${MongoDatabase.name}',
+                      'Welcome, ${FirebaseDB.currentUser}',
                       style: const TextStyle(fontSize: 30),
                     )
                   ],
@@ -84,10 +82,11 @@ class AccountPage extends StatelessWidget {
             contentPadding: const EdgeInsets.all(10),
             actions: [
               TextButton(
-                  onPressed: () async{
+                  onPressed: () async {
                     Navigator.pop(context);
-                     await FirebaseAuth.instance.signOut();
-                     navigatorkey.currentState!.popUntil((route)=> route.isFirst);
+                    await FirebaseAuth.instance.signOut();
+                    navigatorkey.currentState!
+                        .popUntil((route) => route.isFirst);
                     // Navigator.pushReplacement(context,
                     //     MaterialPageRoute(builder: (context) => LoginPage()));
                   },
@@ -95,7 +94,7 @@ class AccountPage extends StatelessWidget {
               TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: const Text('No'))
-            ], 
+            ],
           );
         });
   }

@@ -1,13 +1,10 @@
-import 'dart:developer';
-
 import 'package:al_ameen/db/firebasedb.dart';
-import 'package:al_ameen/db/mongodb.dart';
-import 'package:al_ameen/model/account_details.dart';
 import 'package:al_ameen/model/data.dart';
-import 'package:faker/faker.dart';
+import 'package:al_ameen/view_model/account_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:mongo_dart/mongo_dart.dart' as mongo;
+// import 'package:mongo_dart/mongo_dart.dart' as mongo;
+import 'package:provider/provider.dart';
 
 class AddDetailsPage extends StatefulWidget {
   const AddDetailsPage({super.key});
@@ -215,7 +212,7 @@ class _HomePageState extends State<AddDetailsPage> {
                       if (_formKey.currentState!.validate()) {
                         final splittedDate = _dateController.text.split(' ');
                         final time = '${splittedDate[1]} ${splittedDate[2]}';
-                        var id = mongo.ObjectId();
+                        // var id = mongo.ObjectId();
                         formattedDate ??= DateTime.utc(DateTime.now().year,
                             DateTime.now().month, DateTime.now().day);
 
@@ -225,29 +222,33 @@ class _HomePageState extends State<AddDetailsPage> {
                                 : 'expense';
                         final paymentMethod =
                             _onlinePayment ? 'Paid Online' : 'Money';
-                        final model = AccountDetails(
-                            id: id,
-                            name: MongoDatabase.name ?? 'muees',
-                            date: formattedDate ?? DateTime.now().toUtc(),
-                            //     DateTime.utc(DateTime.now().year,
-                            // DateTime.now().month, DateTime.now().day),
-                            time: time,
-                            amount: _amountController.text,
-                            description: _descriptionController?.text ?? '',
-                            type: category,
-                            payment: paymentMethod);
+                        // final model = AccountDetails(
+                        //     id: id,
+                        //     name: MongoDatabase.name ?? 'muees',
+                        //     date: formattedDate ?? DateTime.now().toUtc(),
+                        //     //     DateTime.utc(DateTime.now().year,
+                        //     // DateTime.now().month, DateTime.now().day),
+                        //     time: time,
+                        //     amount: _amountController.text,
+                        //     description: _descriptionController?.text ?? '',
+                        //     type: category,
+                        //     payment: paymentMethod);
 
                         final model2 = Data(
-                            
-                            name: MongoDatabase.name!,
-                            date: formattedDate ?? DateTime.now(),
-                            time: time,
-                            amount: _amountController.text,
-                            description: _descriptionController?.text,
-                            type: category,
-                            payment: paymentMethod);
-                        await FirebaseDB.insert(model2);
-                        await FirebaseDB.getData2();
+                          name: FirebaseDB.currentUser ?? "Muees",
+                          date: formattedDate ?? DateTime.now(),
+                          time: time,
+                          amount: _amountController.text,
+                          description: _descriptionController?.text,
+                          type: category,
+                          payment: paymentMethod,
+                        );
+                        // await FirebaseDB.insert(model2);
+                        // await FirebaseDB.getData2();
+                        Provider.of<AccountProvider>(context, listen: false)
+                            .addAccountsData(model2);
+                        Provider.of<AccountProvider>(context, listen: false)
+                            .getAccountsData();
 
                         // await MongoDatabase.insert(model);
                         // await MongoDatabase.getData();
