@@ -2,7 +2,6 @@ import 'package:al_ameen/ui/view_models/account_provider.dart';
 import 'package:al_ameen/ui/view_models/login_provider.dart';
 import 'package:al_ameen/utils/locator.dart';
 import 'package:al_ameen/ui/views/splash_screen_page.dart';
-import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -14,7 +13,7 @@ Future<void> main() async {
       [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
   setupLocator();
   await firebaseRepo.connect();
-  runApp(DevicePreview(enabled: true, builder: (context) => const MyApp()));
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -25,19 +24,25 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<AccountProvider>(
-          create: (_) => AccountProvider(),
+          create: (_) {
+            final repo =
+                AccountProvider(firebaseRepo, sharedPreferencesServices);
+            repo.getAccountsData();
+            return repo;
+          },
         ),
         ChangeNotifierProvider<LoginProvider>(
-          create: (_) => LoginProvider(),
+          create: (_) => LoginProvider(firebaseRepo),
         ),
       ],
       child: Sizer(
         builder: (context, orientation, deviceType) {
           return MaterialApp(
-            builder: DevicePreview.appBuilder,
+            key: const Key('material-app'),
             debugShowCheckedModeBanner: false,
             theme: ThemeData(
-              primarySwatch: Colors.blue,
+              primaryColor: Colors.blue,
+              useMaterial3: false,
               inputDecorationTheme: InputDecorationTheme(
                 errorStyle: TextStyle(
                   fontSize: 8.sp,
@@ -46,7 +51,7 @@ class MyApp extends StatelessWidget {
                 ),
               ),
             ),
-            home: const SpalshScreenPage(),
+            home: SpalshScreenPage(sharedPreferencesServices),
           );
         },
       ),

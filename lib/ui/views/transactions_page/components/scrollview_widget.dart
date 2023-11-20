@@ -1,5 +1,6 @@
 import 'package:al_ameen/data/models/data.dart';
 import 'package:al_ameen/ui/view_models/account_provider.dart';
+import 'package:al_ameen/utils/style.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:provider/provider.dart';
@@ -30,9 +31,8 @@ class ScrollViewBuilder extends StatelessWidget {
                             valueIndicatorTextStyle:
                                 TextStyle(fontSize: 20.sp)),
                         child: SlidableAction(
+                            key: const Key('delete'),
                             icon: Icons.delete,
-                            // borderRadius: BorderRadius.all(Radius.circular(25.0)),
-                            //spacing: 8,
                             onPressed: (context) {
                               if (data[index].id != null) {
                                 Provider.of<AccountProvider>(context,
@@ -42,9 +42,7 @@ class ScrollViewBuilder extends StatelessWidget {
                             })),
                   ],
                 ),
-                child: isTablet
-                    ? _buildTile(index)
-                    : _buildListTile(index, constraints),
+                child: isTablet ? _buildTile(index) : _buildListTile(index),
               ),
             ),
           );
@@ -53,8 +51,9 @@ class ScrollViewBuilder extends StatelessWidget {
   }
 
   // listTile widget
-  ListTile _buildListTile(int index, BoxConstraints constraints) {
+  ListTile _buildListTile(int index) {
     return ListTile(
+        key: const Key('list-tile'),
         contentPadding: EdgeInsets.symmetric(
           horizontal: 2.w,
           vertical: 1.h,
@@ -84,7 +83,8 @@ class ScrollViewBuilder extends StatelessWidget {
         leading: CircleAvatar(
           radius: 6.w,
           child: Text(
-            data[index].name.substring(0, 2),
+            data[index].chair.substring(0, 2).toCapitalized() +
+                data[index].chair.substring(5),
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12.sp, fontFamily: 'RobotoCondensed'),
           ),
@@ -95,9 +95,6 @@ class ScrollViewBuilder extends StatelessWidget {
             Text(data[index].time,
                 style:
                     TextStyle(fontSize: 10.sp, fontFamily: 'RobotoCondensed')),
-            // SizedBox(
-            //   height: 1.w,
-            // ),
             Text(
               data[index].payment == 'Money' ? 'by Money' : 'by UPI',
               style: TextStyle(
@@ -111,16 +108,10 @@ class ScrollViewBuilder extends StatelessWidget {
   }
 
   Widget _buildTile(int index) {
-    // final screenWidth = constraints.maxWidth;
-    // final circleAvatarSize = screenWidth * 0.1;
-    // final textFontSize = screenWidth * 0.035;
-    // final smallTextFontSize = screenWidth * 0.025;
-
     return Container(
       decoration: BoxDecoration(
           color: Colors.blue.shade100,
           borderRadius: BorderRadius.circular(15.0)),
-      // decoration: B,
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 1.5.h, horizontal: 2.w),
         child: Row(
@@ -129,15 +120,14 @@ class ScrollViewBuilder extends StatelessWidget {
             CircleAvatar(
               radius: 5.w,
               child: Text(
-                data[index].name.substring(0, 2),
+                data[index].chair.substring(0, 2).toCapitalized() +
+                    data[index].chair.substring(5),
                 style: TextStyle(
                   fontSize: 12.sp,
                   fontFamily: 'RobotoCondensed',
                 ),
               ),
             ),
-            // const SizedBox(width: 10),
-            // SizedBox(width: ,),
             Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -163,7 +153,6 @@ class ScrollViewBuilder extends StatelessWidget {
                   ),
               ],
             ),
-            // const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [

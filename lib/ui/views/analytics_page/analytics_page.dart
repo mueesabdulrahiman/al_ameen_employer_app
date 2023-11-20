@@ -15,35 +15,28 @@ class AnalyticsPage extends StatefulWidget {
   State<AnalyticsPage> createState() => _AnalyticsPageState();
 }
 
-late bool flag;
-
 class _AnalyticsPageState extends State<AnalyticsPage> {
-  @override
-  void initState() {
-    super.initState();
-    selectedFromDate = null;
-    selectedToDate = null;
-    flag = false;
-  }
-
-  @override
-  void dispose() {
-    selectedFromDate = null;
-    selectedToDate = null;
-    super.dispose();
-  }
+  late AccountProvider accountProvider;
 
   void _initialLoadData(AccountProvider accountProvider) {
-    if (flag == false && selectedFromDate == null && selectedToDate == null) {
+    if (accountProvider.analyticsPageFlag == false &&
+        accountProvider.afromDate == null &&
+        accountProvider.atoDate == null) {
       accountProvider.getAllAccountsData();
       accountProvider.getEachEmployeeData();
-      flag = true;
+      accountProvider.changeAnalyticsPageFlow();
     }
   }
 
   @override
+  void dispose() {
+    accountProvider.resetAnalyticsPage();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final accountProvider = context.watch<AccountProvider>();
+    accountProvider = context.watch<AccountProvider>();
     _initialLoadData(accountProvider);
     return Scaffold(
       body: SafeArea(
@@ -81,9 +74,6 @@ class _AnalyticsPageState extends State<AnalyticsPage> {
 
                   SizedBox(
                     height: 28.h,
-                    // MediaQuery.of(context).size.width < 500
-                    //     ? MediaQuery.of(context).size.height * 0.3
-                    //     : MediaQuery.of(context).size.width * 0.25,
                     child: Consumer<AccountProvider>(
                       child: Padding(
                         padding: EdgeInsets.only(top: 8.sp),

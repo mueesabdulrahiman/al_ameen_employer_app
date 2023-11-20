@@ -1,17 +1,19 @@
 import 'package:al_ameen/ui/view_models/login_provider.dart';
 import 'package:al_ameen/ui/views/login_page/components/form_widgets.dart';
+import 'package:al_ameen/utils/shared_preference.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage(this.sharedPref, {super.key});
+  final SharedPreferencesServices sharedPref;
 
   @override
   State<LoginPage> createState() => _MyWidgetState();
 }
 
-final scaffoldKey = GlobalKey<ScaffoldState>();
+final loginScaffoldKey = GlobalKey<ScaffoldState>();
 final formKey = GlobalKey<FormState>();
 
 class _MyWidgetState extends State<LoginPage> {
@@ -37,7 +39,7 @@ class _MyWidgetState extends State<LoginPage> {
       onTap: () => FocusScope.of(context).unfocus,
       child: Scaffold(
         backgroundColor: Colors.white,
-        key: scaffoldKey,
+        key: loginScaffoldKey,
         body: SafeArea(
           child: Center(
             child: Padding(
@@ -59,13 +61,18 @@ class _MyWidgetState extends State<LoginPage> {
                         passwordField(context, _passwordController, _node2),
                         SizedBox(height: 2.h),
                         ElevatedButton(
+                            key: const Key('login-button'),
                             style: ElevatedButton.styleFrom(
                                 padding: EdgeInsets.symmetric(vertical: 1.h),
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10.0))),
                             onPressed: () async {
-                              await login(context, _usernameController,
-                                  _passwordController, provider);
+                              await login(
+                                  context,
+                                  _usernameController,
+                                  _passwordController,
+                                  provider,
+                                  widget.sharedPref);
                             },
                             child: Text(
                               'Login',

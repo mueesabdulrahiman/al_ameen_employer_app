@@ -3,17 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
 class SearchFilterBuilder extends StatelessWidget {
-  SearchFilterBuilder(this.provider, {super.key});
+ const  SearchFilterBuilder(this.provider, {super.key});
   final AccountProvider provider;
-  final categoryTypes = ['Income', 'Expense', 'Both'];
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         buildSearchFilterOption(context, provider),
-        const SizedBox(
-          height: 10,
+        SizedBox(
+          height: 1.h,
         ),
         _buildFilterButtons(context, provider),
       ],
@@ -28,15 +27,12 @@ class SearchFilterBuilder extends StatelessWidget {
           flex: 4,
           child: SizedBox(
             height: 5.h,
-            // height: MediaQuery.of(context).size.width < 500
-            //     ? MediaQuery.of(context).size.height * 0.05
-            //     : MediaQuery.of(context).size.width * 0.07,
             child: ElevatedButton(
                 onPressed: () async {
                   if (provider.fromDate != null &&
                       provider.toDate != null &&
                       provider.dropDownValue != null) {
-                    provider.searchAccountsData(type: provider.dropDownValue);
+                    provider.searchAccountsData(provider.dropDownValue);
                     provider.didSearch = true;
                   }
                 },
@@ -52,9 +48,6 @@ class SearchFilterBuilder extends StatelessWidget {
           flex: 1,
           child: SizedBox(
             height: 5.h,
-            // MediaQuery.of(context).size.width < 500
-            //     ? MediaQuery.of(context).size.height * 0.05
-            //     : MediaQuery.of(context).size.width * 0.07,
             child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
@@ -112,7 +105,7 @@ class SearchFilterBuilder extends StatelessWidget {
           child: SizedBox(
             child: Center(
               child: Text(
-                provider.formattedToDate ?? 'To Date ',
+                provider.formattedToDate ?? 'To Date',
                 style: TextStyle(
                     color: Colors.white,
                     fontFamily: 'RobotoCondensed',
@@ -148,11 +141,10 @@ class SearchFilterBuilder extends StatelessWidget {
                 fontFamily: 'RobotoCondensed',
                 fontSize: 10.sp)),
         value: provider.dropDownValue,
-        items: categoryTypes.map(buildMenuButton).toList(),
+        items: provider.categoryTypes.map(buildMenuButton).toList(),
         onChanged: (value) {
           provider.setDropDownValue(value);
         },
-       
       ),
     );
   }

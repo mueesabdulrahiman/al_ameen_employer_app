@@ -1,15 +1,17 @@
 import 'package:al_ameen/data/models/api_status.dart';
 import 'package:al_ameen/data/models/data.dart';
+import 'package:al_ameen/data/repository/firebase_repository.dart';
 import 'package:al_ameen/ui/views/add_details_page/add_details_page.dart';
-import 'package:al_ameen/utils/locator.dart';
 import 'package:al_ameen/utils/shared_preference.dart';
+import 'package:al_ameen/utils/style.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class AccountProvider extends ChangeNotifier {
-  AccountProvider() {
-    getAccountsData();
-  }
+  final FirebaseRepositoryImplementation firebase;
+  final SharedPreferencesServices sharedPref;
+
+  AccountProvider(this.firebase, this.sharedPref);
 
   // loading variable
   bool _loading = false;
@@ -28,19 +30,42 @@ class AccountProvider extends ChangeNotifier {
   String? _formattedToDate;
   String? get formattedFromDate => _formattedFromDate;
   String? get formattedToDate => _formattedToDate;
-  String? _dropDownValue;
-  String? get dropDownValue => _dropDownValue;
+
   bool didSearch = false;
   List<Data> _searchedData = [];
   List<Data> get searchedData => _searchedData;
+  final List<String> _categoryTypes = ['Income', 'Expense', 'Both'];
+  List<String> get categoryTypes => _categoryTypes;
+  String? _dropDownValue;
+  String? get dropDownValue => _dropDownValue;
 
   // add details page variable
   bool _onlinePayment = false;
   CategoryType _categoryType = CategoryType.income;
   bool get onlinePayment => _onlinePayment;
   CategoryType get categoryType => _categoryType;
+  String? _selectedChair;
+  String? get selectedChair => _selectedChair;
+  String? _menuError;
+  String? get menuError => _menuError;
+
+  // manage chairs page variable
+  List<String> _chairs = [];
+  List<String> get chairs => _chairs;
+  bool? _hasDeleted;
+  bool? get hasDeleted => _hasDeleted;
+
+  // storing inserting model for testing purpose (add details page testing)
+  Data? _model;
+  Data get model => _model!;
+
+  setModel(Data newModel) async {
+    _model = newModel;
+  }
 
   // analytics page variables
+  bool _analyticsPageFlag = false;
+  bool get analyticsPageFlag => _analyticsPageFlag;
   DateTime? _afromDate;
   DateTime? _atoDate;
   DateTime? get afromDate => _afromDate;
@@ -57,6 +82,9 @@ class AccountProvider extends ChangeNotifier {
   //profile page name
   String? _username;
   String? get username => _username;
+
+  String? _role;
+  String? get role => _role;
 
   // error handle variable
   late String _errorText;
@@ -111,7 +139,7 @@ class AccountProvider extends ChangeNotifier {
   asetFromDate(DateTime? afromDate) {
     _afromDate = afromDate;
     _afromDate != null
-        ? _aformattedFromDate = DateFormat.MMMMd().format(_afromDate!)
+        ? _aformattedFromDate = DateFormat.yMMMd().format(_afromDate!)
         : _aformattedFromDate = null;
     notifyListeners();
   }
@@ -119,9 +147,19 @@ class AccountProvider extends ChangeNotifier {
   asetToDate(DateTime? atoDate) {
     _atoDate = atoDate;
     _atoDate != null
-        ? _aformattedToDate = DateFormat.MMMMd().format(_atoDate!)
+        ? _aformattedToDate = DateFormat.yMMMd().format(_atoDate!)
         : _aformattedToDate = null;
     notifyListeners();
+  }
+
+  changeAnalyticsPageFlow() => _analyticsPageFlag = !_analyticsPageFlag;
+
+  resetAnalyticsPage() {
+    _afromDate = null;
+    _atoDate = null;
+    _aformattedFromDate = null;
+    _aformattedToDate = null;
+    changeAnalyticsPageFlow();
   }
 
   setAllAccountsDataList(List<Data> allData) {
@@ -142,23 +180,33 @@ class AccountProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setUsername(String name) {
-    _username = '';
+  void setChair(String? selectedEmp) {
+    _selectedChair = selectedEmp;
+    notifyListeners();
+  }
+
+  void setDropdownMenuError(String? error) {
+    _menuError = error;
+    notifyListeners();
+  }
+
+  void setUsername(String name, String role) {
     _username = name;
+    _role = role;
   }
 
   // firebase connection
 
   void connectFirebase() async {
-    await firebaseRepo.connect();
+    await firebase.connect();
     notifyListeners();
   }
 
   // get data
 
-  void getAccountsData() async {
+  Future<void> getAccountsData() async {
     setLoading(true);
-    final result = await firebaseRepo.getData();
+    final result = await firebase.getData();
     if (result is Success) {
       setAccountDataList(result.response as List<Data>);
     } else if (result is Failure) {
@@ -170,9 +218,9 @@ class AccountProvider extends ChangeNotifier {
 
   // get all users
 
-  void getAllUsersList() async {
+  Future<void> getAllUsersList() async {
     setLoading(true);
-    final result = await firebaseRepo.getAllUsers();
+    final result = await firebase.getAllUsers();
     if (result is Set<String>) {
       setAllUsersList(result);
     } else if (result is Failure) {
@@ -184,32 +232,32 @@ class AccountProvider extends ChangeNotifier {
 
   // add data
 
-  void addAccountsData(Data dataModel) async {
-    await firebaseRepo.insert(dataModel);
+  Future<void> addAccountsData(Data dataModel) async {
+    await firebase.insert(dataModel);
     notifyListeners();
   }
 
   // delete data
 
-  void deleteAccountsData(String id) async {
-    await firebaseRepo.deleteData(id);
+  Future<void> deleteAccountsData(String id) async {
+    await firebase.deleteData(id);
     getAccountsData();
   }
 
   // delete searched data
 
-  void deleteSearchedData(String id) async {
-    await firebaseRepo.deleteData(id);
-    searchAccountsData(type: dropDownValue);
+  Future<void> deleteSearchedData(String id) async {
+    await firebase.deleteData(id);
+    await searchAccountsData(dropDownValue);
     getAccountsData();
   }
 
   // search data
 
-  void searchAccountsData({String? type}) async {
+  Future<void> searchAccountsData(String? type) async {
     setLoading(true);
-    final searchResult = await firebaseRepo.searchData(
-        start: _fromDate!, end: _toDate!, type: type);
+    final searchResult =
+        await firebase.searchData(start: _fromDate!, end: _toDate!, type: type);
     setSearchedDataList(searchResult);
     setLoading(false);
   }
@@ -229,41 +277,89 @@ class AccountProvider extends ChangeNotifier {
 
   // get each employee statistics
 
-  void getEachEmployeeData({DateTime? fromDate, DateTime? toDate}) async {
-    final res = await firebaseRepo.getEachEmployeeData(
-        fromDate: fromDate, toDate: toDate);
-    if (res is Failure) {
-      _errorText = res.response.toString();
+  Future<void> getEachEmployeeData(
+      {DateTime? fromDate, DateTime? toDate}) async {
+    final result =
+        await firebase.getEachEmployeeData(fromDate: fromDate, toDate: toDate);
+    if (result is Failure) {
+      _errorText = result.response.toString();
       notifyListeners();
     } else {
-      setEmployersDataList(res as Map<String, List<Data>>);
+      setEmployersDataList(result as Map<String, List<Data>>);
       notifyListeners();
     }
   }
 
   // get complete data (including all employees data)
 
-  void getAllAccountsData({DateTime? start, DateTime? end}) async {
-    final res =
-        await firebaseRepo.getDashBoardData(fromDate: start, toDate: end);
+  Future<void> getAllAccountsData({DateTime? start, DateTime? end}) async {
+    final res = await firebase.getDashBoardData(fromDate: start, toDate: end);
     if (res is Failure) {
       _errorText = res.response.toString();
       notifyListeners();
     } else {
-      setAllAccountsDataList(
-          res is Success ? res.response as List<Data> : res as List<Data>);
+      setAllAccountsDataList(res is Success ? res.response as List<Data> : res);
       notifyListeners();
     }
   }
 
   // get profile username
   Future<void> getUsername() async {
-    final name = await SharedPreferencesServices.checkLoginStatus();
+    final name = await sharedPref.checkLoginStatus();
+    late String formattedRole;
+
     if (name != null && name.isNotEmpty) {
-      final formattedName =
-          name[0].substring(0, 1).toUpperCase() + name[0].substring(1);
-      setUsername(formattedName);
+      final formattedName = name[0].toCapitalized();
+      if (name[0].contains('muees')) {
+        formattedRole = 'Developer';
+      } else if (name[0].contains('jaleel')) {
+        formattedRole = 'Admin';
+      } else {
+        formattedRole = 'Staff Member';
+      }
+      setUsername(formattedName, formattedRole);
       notifyListeners();
     }
+  }
+
+  //  manage chairs crud functions
+
+  setChairsList(List<String> data) {
+    data.sort((a, b) {
+      int aNumber = int.tryParse(a.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+      int bNumber = int.tryParse(b.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+      return aNumber.compareTo(bNumber);
+    });
+    _chairs = data;
+  }
+
+  setDeleteResult(bool? result) => _hasDeleted = result;
+
+  Future<void> createChair(String chair) async {
+    await firebase.insertChair(chair);
+    notifyListeners();
+  }
+
+  Future<void> deleteChair(String chairname) async {
+    final hasDeleted = await firebase.deleteChair(chairname);
+    setDeleteResult(hasDeleted);
+    // displayChairs();
+  }
+
+  Future<void> displayChairs() async {
+    final result = await firebase.getChairs();
+    if (result is Success) {
+      setChairsList(result.response as List<String>);
+    } else if (result is Failure) {
+      _errorText = '';
+      _errorText = result.response.toString();
+    }
+    notifyListeners();
+  }
+
+  Future<void> deleteMultipleData(BuildContext context,
+      {required DateTime startDate, required DateTime endDate}) async {
+    await firebase.deleteMultipleData(context, start: startDate, end: endDate);
+    notifyListeners();
   }
 }

@@ -47,7 +47,6 @@ class EmployeePageViewBuilder extends StatelessWidget {
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12.sp)),
             child: Column(
-              //   mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 ListTile(
                   contentPadding: SizerUtil.deviceType == DeviceType.mobile
@@ -116,14 +115,14 @@ class EmployeePageViewBuilder extends StatelessWidget {
         });
   }
 
-  Card builldCountCard(int netIncOffline) {
+  Card builldCountCard(int value) {
     return Card(
         child: Padding(
       padding: EdgeInsets.all(3.sp),
       child: SizedBox(
         width: 40.sp,
         child: Text(
-          netIncOffline.toString(),
+          value.toString(),
           textAlign: TextAlign.center,
           style: TextStyle(
             fontFamily: 'RobotoCondensed',

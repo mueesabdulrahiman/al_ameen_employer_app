@@ -20,10 +20,22 @@ class ContactsPage extends StatelessWidget {
       ),
       body: SafeArea(
           child: Padding(
-        padding: EdgeInsets.only(top: isTablet ? 10.sp : 5.sp, left: 10.sp),
+        padding: EdgeInsets.all(isTablet ? 10.sp : 10.sp),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(children: [
+              const Expanded(
+                child: Divider(color: Colors.grey, thickness: 1),
+              ),
+              Text('Developer Support',
+                  style: TextStyle(
+                      fontFamily: 'RobotoCondensed', fontSize: 10.sp)),
+              const Expanded(
+                child: Divider(color: Colors.grey, thickness: 1),
+              )
+            ]),
+            SizedBox(height: 1.h),
             Row(children: [
               Icon(
                 Icons.phone,
@@ -50,41 +62,11 @@ class ContactsPage extends StatelessWidget {
                 SizedBox(
                   width: 5.w,
                 ),
-                Text('Muees7575@gmail.com',
+                Text('Tech@Prokomers.com',
                     style: TextStyle(
                         fontFamily: 'RobotoCondensed', fontSize: 12.sp)),
               ],
             )
-            // SizedBox(
-            //   height: isTablet ? 7.h : 5.h,
-            //   child:
-
-            //   ListTile(
-            //     contentPadding: EdgeInsets.all(5.sp),
-            //     leading: Icon(
-            //       Icons.phone,
-            //       color: Colors.blue,
-            //       size: 15.sp,
-            //     ),
-            //     title: Text('+91 9048694982',
-            //         style: TextStyle(
-            //             fontFamily: 'RobotoCondensed', fontSize: 12.sp)),
-            //   ),
-            // ),
-            // SizedBox(
-            //   height: isTablet ? 7.h : 5.h,
-            //   child: ListTile(
-            //     contentPadding: EdgeInsets.all(5.sp),
-            //     leading: Icon(
-            //       Icons.mail,
-            //       color: Colors.blue,
-            //       size: 15.sp,
-            //     ),
-            //     title: Text('Muees7575@gmail.com',
-            //         style: TextStyle(
-            //             fontFamily: 'RobotoCondensed', fontSize: 12.sp)),
-            //   ),
-            // ),
           ],
         ),
       )),

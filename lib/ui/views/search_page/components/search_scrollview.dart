@@ -1,4 +1,5 @@
 import 'package:al_ameen/ui/view_models/account_provider.dart';
+import 'package:al_ameen/utils/style.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
@@ -6,11 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
 
 class SearchScrollViewBuilder extends StatelessWidget {
-  const SearchScrollViewBuilder({
-    super.key,
-  });
-
-  //final AccountProvider state;
+  const SearchScrollViewBuilder({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +63,7 @@ class SearchScrollViewBuilder extends StatelessWidget {
             );
           } else {
             return Center(
-              child: Text('Searched data not found ',
+              child: Text('Searched data not found',
                   style: TextStyle(
                       fontFamily: 'RobotoCondensed', fontSize: 10.sp)),
             );
@@ -110,7 +107,8 @@ class SearchScrollViewBuilder extends StatelessWidget {
         leading: CircleAvatar(
           radius: 6.w,
           child: Text(
-            provider.searchedData[index].name.substring(0, 2),
+            provider.searchedData[index].chair.substring(0, 2).toCapitalized() +
+                provider.searchedData[index].chair.substring(5),
             textAlign: TextAlign.center,
             style: TextStyle(fontFamily: 'RobotoCondensed', fontSize: 11.sp),
           ),
@@ -154,15 +152,16 @@ class SearchScrollViewBuilder extends StatelessWidget {
             CircleAvatar(
               radius: 5.w,
               child: Text(
-                provider.searchedData[index].name.substring(0, 2),
+                provider.searchedData[index].chair
+                        .substring(0, 2)
+                        .toCapitalized() +
+                    provider.searchedData[index].chair.substring(5),
                 style: TextStyle(
                   fontSize: 12.sp,
                   fontFamily: 'RobotoCondensed',
                 ),
               ),
             ),
-            // const SizedBox(width: 10),
-            // SizedBox(width: ,),
             Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -188,7 +187,6 @@ class SearchScrollViewBuilder extends StatelessWidget {
                   ),
               ],
             ),
-            // const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [

@@ -12,9 +12,7 @@ class BuildAnalyticsDashboard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 10.h,
-      // MediaQuery.of(context).size.width < 500
-      //     ? MediaQuery.of(context).size.height * 0.10
-      //     : MediaQuery.of(context).size.width * 0.15,
+    
       decoration: BoxDecoration(
         color: Theme.of(context).primaryColor,
       ),

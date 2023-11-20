@@ -1,7 +1,6 @@
 import 'package:al_ameen/data/models/data.dart';
 import 'package:al_ameen/ui/view_models/account_provider.dart';
 import 'package:al_ameen/ui/views/add_details_page/add_details_page.dart';
-import 'package:al_ameen/utils/shared_preference.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -10,13 +9,14 @@ import 'package:sizer/sizer.dart';
 TextFormField buildDescriptionField(
     TextEditingController? descriptionController, FocusNode node3) {
   return TextFormField(
+    key: const Key('description-field'),
     controller: descriptionController,
     focusNode: node3,
     style: TextStyle(fontFamily: 'RobotoCondensed', fontSize: 11.sp),
     decoration: InputDecoration(
       hintText: 'For ex: haircut',
       hintStyle: TextStyle(fontFamily: 'RobotoCondensed', fontSize: 11.sp),
-      labelText: 'Enter Description',
+      labelText: 'Enter Description (optional)',
       labelStyle: TextStyle(
           color: Colors.blue.shade700,
           fontFamily: 'RobotoCondensed',
@@ -42,6 +42,7 @@ TextFormField buildDescriptionField(
 TextFormField buildAmountField(
     TextEditingController amountController, FocusNode node2) {
   return TextFormField(
+    key: const Key('amount-field'),
     controller: amountController,
     focusNode: node2,
     style: TextStyle(fontFamily: 'RobotoCondensed', fontSize: 11.sp),
@@ -80,7 +81,9 @@ TextFormField buildAmountField(
 TextFormField buildDateField(BuildContext context,
     TextEditingController dateController, FocusNode node1) {
   return TextFormField(
+    key: const Key('date-field'),
     focusNode: node1,
+    keyboardType: TextInputType.none,
     controller: dateController,
     style: TextStyle(fontFamily: 'RobotoCondensed', fontSize: 11.sp),
     decoration: InputDecoration(
@@ -112,8 +115,8 @@ TextFormField buildDateField(BuildContext context,
       pickedDate = await showDatePicker(
           context: context,
           initialDate: DateTime.now(),
-          firstDate: DateTime(DateTime.now().year, 1, 1),
-          lastDate: DateTime(DateTime.now().year, 12, 31));
+          firstDate: DateTime.now().subtract(const Duration(days: 365)),
+          lastDate: DateTime.now());
       pickedTime = const TimeOfDay(hour: 12, minute: 0);
 
       if (pickedDate != null) {
@@ -134,8 +137,10 @@ ElevatedButton buildSubmitButton(
   TextEditingController amountController,
   TextEditingController dateController,
   DateTime? date,
+  Future<List<String>?>? sharedPreference,
 ) {
   return ElevatedButton(
+      key: const Key('submit-button'),
       style: ElevatedButton.styleFrom(
           padding: EdgeInsets.symmetric(vertical: 1.h),
           shape: const RoundedRectangleBorder(
@@ -151,7 +156,8 @@ ElevatedButton buildSubmitButton(
         final providerNavigator = Provider.of<AccountProvider>(context,
             listen:
                 false); // because buildcontext can't directly call inside async function
-        if (formKey.currentState!.validate()) {
+        if (formKey.currentState!.validate() &&
+            provider.selectedChair != null) {
           final splittedDate = dateController.text.split(' ');
           final formattedTime = '${splittedDate[1]} ${splittedDate[2]}';
           final formattedDate = pickedDate != null ? date : DateTime.now();
@@ -162,26 +168,28 @@ ElevatedButton buildSubmitButton(
           final paymentMethod =
               provider.onlinePayment ? 'Paid Online' : 'Money';
 
-          final user = await SharedPreferencesServices.checkLoginStatus();
+          final user = await sharedPreference;
 
           final formattedUser =
               user![0].substring(0, 1).toUpperCase() + user[0].substring(1);
           final regEx = RegExp(r'[a-zA-Z]+');
           final roleStatus = regEx.stringMatch(user[1]);
+          final selectedChair = provider.selectedChair;
 
           final model = Data(
-            name: formattedUser,
-            role: roleStatus ?? 'Nil',
-            date: formattedDate ?? DateTime.now(),
-            time: formattedTime,
-            amount: amountController.text,
-            description: descriptionController?.text,
-            type: category,
-            payment: paymentMethod,
-          );
+              name: formattedUser,
+              role: roleStatus ?? 'Nil',
+              date: formattedDate ?? DateTime.now(),
+              time: formattedTime,
+              amount: amountController.text,
+              description: descriptionController?.text,
+              chair: selectedChair!,
+              type: category,
+              payment: paymentMethod);
           pickedDate = null;
-
+          provider.setModel(model);
           providerNavigator.addAccountsData(model);
+
           providerNavigator.getAccountsData();
           navigator.pop();
         }
@@ -196,6 +204,7 @@ Widget buildCheckBoxOption(AccountProvider provider) {
       Transform.scale(
         scale: isTablet ? 2.0 : 1.0,
         child: Checkbox(
+            key: const Key('checkbox-field'),
             value: provider.onlinePayment,
             onChanged: (value) {
               provider.setHasPaidOnline(value ?? false);
@@ -208,71 +217,116 @@ Widget buildCheckBoxOption(AccountProvider provider) {
           style: TextStyle(fontSize: 11.sp, fontFamily: 'RobotoCondensed'))
     ],
   );
-  //  CheckboxListTile(
-  //   controlAffinity: ListTileControlAffinity.leading,
-  //   value: provider.onlinePayment,
-  //   onChanged: (val) {
-  //     provider.setHasPaidOnline(val ?? false);
-  //   },
-  //   title: Text(
-  //     'Online Payment',
-  //     style: TextStyle(fontFamily: 'RobotoCondensed', fontSize: 11.sp),
-  //   ),
-  // );
 }
 
-Widget buildRadioButtonOption(BuildContext context, AccountProvider provider) {
+Widget buildRadioButtonOption(AccountProvider provider) {
   bool isTablet = SizerUtil.deviceType == DeviceType.tablet;
 
-  return Padding(
-    padding: EdgeInsets.symmetric(horizontal: 0.w),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Transform.scale(
-              scale: isTablet ? 2.0 : 1.0,
-              child: Radio<CategoryType>(
-                  value: CategoryType.income,
-                  groupValue: provider.categoryType,
-                  onChanged: (value) {
-                    provider.setCategoryType(value ?? CategoryType.income);
-                  }),
-            ),
-            SizedBox(
-              width: 3.w,
-            ),
-            Text('Income',
-                style:
-                    TextStyle(fontSize: 11.sp, fontFamily: 'RobotoCondensed')),
-          ],
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.start,
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Transform.scale(
+            scale: isTablet ? 2.0 : 1.0,
+            child: Radio<CategoryType>(
+                key: const Key('radio-button1'),
+                value: CategoryType.income,
+                groupValue: provider.categoryType,
+                onChanged: (value) {
+                  provider.setCategoryType(value ?? CategoryType.income);
+                }),
+          ),
+          SizedBox(
+            width: 3.w,
+          ),
+          Text('Income',
+              style: TextStyle(fontSize: 11.sp, fontFamily: 'RobotoCondensed')),
+        ],
+      ),
+      SizedBox(
+        width: 8.w,
+      ),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Transform.scale(
+            scale: isTablet ? 2.0 : 1.0,
+            child: Radio<CategoryType>(
+                key: const Key('radio-button2'),
+                value: CategoryType.expense,
+                groupValue: provider.categoryType,
+                onChanged: (value) {
+                  provider.setCategoryType(value ?? CategoryType.income);
+                }),
+          ),
+          SizedBox(
+            width: 3.w,
+          ),
+          Text('Expense',
+              style: TextStyle(fontSize: 11.sp, fontFamily: 'RobotoCondensed')),
+        ],
+      ),
+    ],
+  );
+}
+
+Widget buildDropdownWidget(BuildContext context, AccountProvider provider) {
+  bool isTablet = SizerUtil.deviceType == DeviceType.tablet;
+  return Container(
+    margin: EdgeInsets.only(right: 60.w),
+    padding: EdgeInsets.symmetric(horizontal: 10.sp),
+    decoration: BoxDecoration(
+        color: Colors.blue.shade100,
+        border: Border.all(
+          color: Colors.blue,
         ),
-        SizedBox(
-          width: 8.w,
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Transform.scale(
-              scale: isTablet ? 2.0 : 1.0,
-              child: Radio<CategoryType>(
-                  value: CategoryType.expense,
-                  groupValue: provider.categoryType,
-                  onChanged: (value) {
-                    provider.setCategoryType(value ?? CategoryType.income);
-                  }),
-            ),
-            SizedBox(
-              width: 3.w,
-            ),
-            Text('Expense',
-                style:
-                    TextStyle(fontSize: 11.sp, fontFamily: 'RobotoCondensed')),
-          ],
-        ),
-      ],
+        borderRadius: BorderRadius.circular(isTablet ? 5.sp : 10.sp)),
+    child: DropdownButtonHideUnderline(
+      child: DropdownButtonFormField<String>(
+        decoration: const InputDecoration(border: InputBorder.none),
+        isDense: true,
+        itemHeight: isTablet ? 5.h : 8.h,
+        borderRadius: BorderRadius.circular(10.sp),
+        iconEnabledColor: Theme.of(context).primaryColor,
+        iconSize: 16.sp,
+        style: TextStyle(fontSize: 11.sp, color: Colors.black),
+        dropdownColor: Colors.white,
+        hint: Text('Select Chair',
+            style: TextStyle(
+                color: Colors.blue.shade700,
+                fontFamily: 'RobotoCondensed',
+                fontSize: 11.sp)),
+        value: provider.selectedChair,
+        items: provider.chairs.map(buildMenuButton).toList(),
+        onChanged: (value) {
+          provider.setChair(value);
+        },
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            provider.setDropdownMenuError("menu should not be empty");
+            return null;
+          } else {
+            provider.setDropdownMenuError(null);
+            provider.setDropDownValue(null);
+            return null;
+          }
+        },
+      ),
+    ),
+  );
+}
+
+DropdownMenuItem<String> buildMenuButton(String item) {
+  bool isTablet = SizerUtil.deviceType == DeviceType.tablet;
+
+  return DropdownMenuItem(
+    value: item,
+    child: Text(
+      item,
+      style: TextStyle(
+          fontFamily: 'RobotoCondensed', fontSize: isTablet ? 10.sp : 11.sp),
     ),
   );
 }

@@ -1,14 +1,16 @@
-import 'package:al_ameen/ui/views/profile_page/account_page.dart';
+import 'package:al_ameen/ui/views/account_page/account_page.dart';
 import 'package:al_ameen/ui/views/add_details_page/add_details_page.dart';
 import 'package:al_ameen/ui/views/analytics_page/analytics_page.dart';
 import 'package:al_ameen/ui/views/search_page/search_page.dart';
 import 'package:al_ameen/ui/views/transactions_page/transaction_page.dart';
+import 'package:al_ameen/utils/shared_preference.dart';
 import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:sizer/sizer.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage(this.sharedPref, {super.key});
+  final SharedPreferencesServices sharedPref;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -16,7 +18,9 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final _pages = [
-    const TransactionPage(),
+    const TransactionPage(
+      key: Key('transactions'),
+    ),
     const SearchPage(),
     const AnalyticsPage(),
     const AccountPage()
@@ -32,7 +36,7 @@ class _HomePageState extends State<HomePage> {
         index: _selectedIndex,
         onchanged: onChangedTab,
       ),
-      floatingActionButton: const FabWidget(),
+      floatingActionButton:  FabWidget(widget.sharedPref),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
@@ -55,6 +59,7 @@ class NavBar extends StatelessWidget {
     const placeholder = Opacity(
       opacity: 0,
       child: IconButton(
+        key: Key('add-details'),
         icon: Icon(
           Icons.no_cell,
         ),
@@ -68,21 +73,34 @@ class NavBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          buildTabItem(icon: const Icon(Icons.home), index: 0),
-          buildTabItem(icon: const Icon(Icons.search), index: 1),
+          buildTabItem(
+              key: const Key('transaction'),
+              icon: const Icon(Icons.home),
+              index: 0),
+          buildTabItem(
+              key: const Key('search'),
+              icon: const Icon(Icons.search),
+              index: 1),
           placeholder,
-          buildTabItem(icon: const Icon(Icons.analytics), index: 2),
-          buildTabItem(icon: const Icon(Icons.person), index: 3),
+          buildTabItem(
+              key: const Key('analytics'),
+              icon: const Icon(Icons.analytics),
+              index: 2),
+          buildTabItem(
+              key: const Key('accounts'),
+              icon: const Icon(Icons.person),
+              index: 3),
         ],
       ),
     );
   }
 
-  buildTabItem({required Icon icon, required int index}) {
+  buildTabItem({required Key key, required Icon icon, required int index}) {
     final isTablet = SizerUtil.deviceType == DeviceType.tablet;
 
     final selectedColor = index == this.index;
     return IconTheme(
+      key: key,
       data: IconThemeData(
           color: selectedColor ? Colors.blue : Colors.grey,
           size: isTablet ? 12.sp : 15.sp),
@@ -95,18 +113,21 @@ class NavBar extends StatelessWidget {
 }
 
 class FabWidget extends StatelessWidget {
-  const FabWidget({super.key});
+  const FabWidget(this.sharedPref, {super.key});
+  final SharedPreferencesServices sharedPref;
 
   @override
   Widget build(BuildContext context) {
     final isTablet = SizerUtil.deviceType == DeviceType.tablet;
 
     return OpenContainer(
+      key: const Key('open_add_details_page'),
       transitionDuration: const Duration(seconds: 1),
       closedShape: const CircleBorder(),
       closedColor: Theme.of(context).primaryColor,
       openColor: Theme.of(context).primaryColor,
-      openBuilder: (context, action) => const AddDetailsPage(),
+      openBuilder: (context, action) =>
+          AddDetailsPage(sharedPref.checkLoginStatus()),
       closedBuilder: (context, action) => Container(
         height: 6.h,
         width: 6.h,

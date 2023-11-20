@@ -12,11 +12,16 @@ class TransactionPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(2.w, 0.5.h, 2.w, 0.5.h),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
+      key: key,
+      body: RefreshIndicator(
+        onRefresh: ()async{
+          final provider = Provider.of<AccountProvider>(context, listen: false);
+               await provider.getAccountsData();
+        },
+        child: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(2.w, 0.5.h, 2.w, 0.5.h),
+            child: LayoutBuilder(builder: (context, constraints) {
               return Column(
                 children: [
                   Consumer<AccountProvider>(
@@ -34,14 +39,16 @@ class TransactionPage extends StatelessWidget {
                           }
                         }
                       }
-
+              
                       return dashboardContainer(context, income, expense);
                     },
                   ),
                   SizedBox(
                     height: 2.5.h,
                   ),
-                  Expanded(child: Consumer<AccountProvider>(
+                  Expanded(
+                      child: Consumer<AccountProvider>(
+                    key: const Key('listview-data'),
                     builder: (context, res, _) {
                       final value = res.getData;
                       List<Data> data = [];
@@ -55,10 +62,15 @@ class TransactionPage extends StatelessWidget {
                       }
                       if (res.loading) {
                         return const Center(
-                          child: CircularProgressIndicator(),
+                          child: CircularProgressIndicator(
+                            key: Key('transactions-progress loader'),
+                          ),
                         );
                       } else if (data.isNotEmpty) {
-                        return ScrollViewBuilder(data: data, constraints: constraints,);
+                        return ScrollViewBuilder(
+                          data: data,
+                          constraints: constraints,
+                        );
                       } else {
                         return Center(
                           child: Text(
@@ -72,7 +84,7 @@ class TransactionPage extends StatelessWidget {
                   )),
                 ],
               );
-            }
+            }),
           ),
         ),
       ),

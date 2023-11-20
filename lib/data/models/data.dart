@@ -6,6 +6,7 @@ class Data {
   final String time;
   final String amount;
   final String? description;
+  final String chair;
   final String type;
   final String payment;
 
@@ -16,8 +17,9 @@ class Data {
       required this.date,
       required this.time,
       required this.amount,
-      required this.type,
       this.description,
+      required this.chair,
+      required this.type,
       required this.payment});
 
   factory Data.fromJson(Map<String, dynamic> json) {
@@ -30,7 +32,8 @@ class Data {
         amount: json["amount"],
         type: json["type"],
         payment: json["payment"],
-        description: json["description"]);
+        description: json["description"],
+        chair: json["chair"]);
   }
 
   Map<String, dynamic> toJson() => {
@@ -41,6 +44,7 @@ class Data {
         "time": time,
         "amount": amount,
         "description": description ?? '',
+        "chair": chair,
         "type": type,
         "payment": payment,
       };

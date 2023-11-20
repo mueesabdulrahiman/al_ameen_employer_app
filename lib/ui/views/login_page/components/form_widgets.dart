@@ -12,6 +12,7 @@ TextFormField passwordField(BuildContext context,
   bool isTablet = SizerUtil.deviceType == DeviceType.tablet;
 
   return TextFormField(
+    key: const Key('password-field'),
     controller: passwordController,
     focusNode: node,
     style: TextStyle(fontFamily: 'RobotoCondensed', fontSize: 11.sp),
@@ -67,9 +68,13 @@ TextFormField usernameFiled(
   bool isTablet = SizerUtil.deviceType == DeviceType.tablet;
 
   return TextFormField(
+    key: const Key('username-field'),
     controller: usernameController,
     focusNode: node,
-    style: TextStyle(fontFamily: 'RobotoCondensed', fontSize: 11.sp,),
+    style: TextStyle(
+      fontFamily: 'RobotoCondensed',
+      fontSize: 11.sp,
+    ),
     decoration: InputDecoration(
         labelText: 'username',
         labelStyle: TextStyle(
@@ -112,28 +117,25 @@ Future<void> login(
     BuildContext context,
     TextEditingController usernameController,
     TextEditingController passwordController,
-    LoginProvider provider) async {
-  FocusScope.of(context).unfocus();
-  final scaffoldMessenger = ScaffoldMessenger.of(context);
+    LoginProvider provider,
+    SharedPreferencesServices sharedPref) async {
+  FocusScope.of(loginScaffoldKey.currentContext!).unfocus();
+  final scaffoldMessenger = ScaffoldMessenger.of(loginScaffoldKey.currentContext!);
   if (formKey.currentState!.validate()) {
-    final user =
-        Login(usernameController.text.trim(), passwordController.text.trim());
-    Provider.of<LoginProvider>(context, listen: false);
+    final user = Login(usernameController.text, passwordController.text);
 
     await provider.userLogin(context, user);
-    final currentUser = provider.loggedUser;
     final error = provider.errorText;
-    if (currentUser != null) {
+    if (provider.currentUser != null) {
       Navigator.pushAndRemoveUntil(
-          scaffoldKey.currentContext!,
-          MaterialPageRoute(
-            builder: (_) => const HomePage(),
-          ),
+          loginScaffoldKey.currentContext!,
+          MaterialPageRoute(builder: (_) =>  HomePage(sharedPref)),
           (route) => false);
-      SharedPreferencesServices.setLoggedIn(
+      await sharedPref.setLoggedIn(
           usernameController.text, passwordController.text);
-      provider.resetLog();
-    } else if (error != null) {
+    }
+    else  if (error != null) 
+    {
       scaffoldMessenger.showSnackBar(SnackBar(
         behavior: SnackBarBehavior.floating,
         margin: const EdgeInsets.all(10.0),
@@ -147,6 +149,7 @@ Future<void> login(
         ),
         backgroundColor: Colors.red,
       ));
+      provider.setFailure(false);
     }
     usernameController.clear();
     passwordController.clear();

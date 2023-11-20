@@ -11,6 +11,7 @@ class SearchPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AccountProvider>();
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -34,7 +35,7 @@ class SearchPage extends StatelessWidget {
               SizedBox(
                 height: 1.h,
               ),
-              const Expanded(
+             const  Expanded(
                 child: SearchScrollViewBuilder(),
               ),
             ],
